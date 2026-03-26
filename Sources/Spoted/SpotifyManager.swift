@@ -300,7 +300,9 @@ class SpotifyManager: ObservableObject {
     func checkIfLiked(trackId: String) async {
         guard let token = await getValidToken() else { return }
 
-        var request = URLRequest(url: URL(string: "\(SpotifyConfig.apiBaseURL)/me/tracks/contains?ids=\(trackId)")!)
+        let uri = "spotify:track:\(trackId)"
+        let encodedUri = uri.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? uri
+        var request = URLRequest(url: URL(string: "\(SpotifyConfig.apiBaseURL)/me/library/contains?uris=\(encodedUri)")!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         do {
@@ -328,9 +330,11 @@ class SpotifyManager: ObservableObject {
         }
 
         let method = isLiked ? "DELETE" : "PUT"
+        let uri = "spotify:track:\(track.id)"
+        let encodedUri = uri.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? uri
         Log.info("toggleLike: \(method) track \(track.id) (\(track.name))")
 
-        let url = URL(string: "\(SpotifyConfig.apiBaseURL)/me/tracks?ids=\(track.id)")!
+        let url = URL(string: "\(SpotifyConfig.apiBaseURL)/me/library?uris=\(encodedUri)")!
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
