@@ -50,6 +50,7 @@ class SpotifyManager: ObservableObject {
     private var tokenExpirationDate: Date?
     private var pollingTimer: Timer?
     private var codeVerifier: String?
+    private var lastTrackId: String?
 
     private let keychainAccessTokenKey = "spotify_access_token"
     private let keychainRefreshTokenKey = "spotify_refresh_token"
@@ -275,6 +276,7 @@ class SpotifyManager: ObservableObject {
                 currentTrack = nil
                 isPlaying = false
                 isLiked = false
+                lastTrackId = nil
                 return
             }
 
@@ -288,7 +290,9 @@ class SpotifyManager: ObservableObject {
             currentTrack = playingResponse.item
             isPlaying = playingResponse.isPlaying
 
-            if let trackId = playingResponse.item?.id {
+            // Only check liked status when the track changes
+            if let trackId = playingResponse.item?.id, trackId != lastTrackId {
+                lastTrackId = trackId
                 await checkIfLiked(trackId: trackId)
             }
         } catch {
@@ -363,7 +367,7 @@ class SpotifyManager: ObservableObject {
 
     func startPolling() {
         pollingTimer?.invalidate()
-        pollingTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+        pollingTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.fetchCurrentTrack()
             }
